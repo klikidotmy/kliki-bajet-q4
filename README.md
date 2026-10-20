@@ -12,7 +12,7 @@ PWA untuk jejak bajet marketing Q4 2026 KLIKI. App baca dan tulis terus ke Googl
 
 ## Setup (sekali sahaja, lebih kurang 5 minit)
 
-1. Buka sheet **Penjejak Bajet Marketing Q4 2026** > **Extensions** > **Apps Script**.
+1. Buka script.google.com > **New project** (projek berasingan; ia buka sheet ikut `SHEET_ID` dalam kod).
 2. Padam kod contoh, tampal semua isi `apps-script/Code.gs`, tekan Save.
 3. **Project Settings** (ikon gear) > **Script properties** > Add: `TOKEN` = kata laluan panjang pilihan sendiri (contoh 20 aksara rawak).
 4. **Deploy** > **New deployment** > jenis **Web app**.

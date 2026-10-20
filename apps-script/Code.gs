@@ -1,9 +1,11 @@
 /**
  * KLIKI Bajet Q4 - API untuk PWA.
- * Pasang dalam sheet "Penjejak Bajet Marketing Q4 2026":
- * Extensions > Apps Script > tampal fail ini > Deploy > New deployment > Web app
- * (Execute as: Me, Who has access: Anyone). Set TOKEN dalam Project Settings > Script properties.
+ * Projek Apps Script berasingan (script.google.com) yang buka sheet "Penjejak Bajet Marketing Q4 2026" ikut ID.
+ * Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone).
+ * Set TOKEN dalam Project Settings > Script properties.
  */
+
+const SHEET_ID = '1kIbaD_2i99siDW-TbNvftlAD6d_giHlC61rGr5XM4O0';
 
 const TABS = {
   log: 'Log Belanja',
@@ -29,7 +31,7 @@ function checkToken_(token) {
 }
 
 function sheet_(name) {
-  const sh = SpreadsheetApp.getActive().getSheetByName(name);
+  const sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName(name);
   if (!sh) throw new Error('Tab tidak dijumpai: ' + name);
   return sh;
 }
