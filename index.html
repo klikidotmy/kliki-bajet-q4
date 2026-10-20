@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KLIKI Bajet Q4</title>
+<meta name="theme-color" content="#046ad8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Bajet Q4">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <img src="icons/logo-white.png" alt="KLIKI" class="logo">
+  <div class="top-meta">
+    <span id="updated">Belum sync</span>
+    <button id="btnRefresh" class="icon-btn" aria-label="Refresh">⟳</button>
+    <button id="btnSettings" class="icon-btn" aria-label="Tetapan">⚙</button>
+  </div>
+</header>
+
+<main id="app">
+  <section id="view-home" class="view"></section>
+  <section id="view-add" class="view" hidden></section>
+  <section id="view-log" class="view" hidden></section>
+  <section id="view-check" class="view" hidden></section>
+  <section id="view-banner" class="view" hidden></section>
+  <section id="view-settings" class="view" hidden></section>
+</main>
+
+<nav class="tabs" aria-label="Menu">
+  <button data-view="home" class="active"><span class="ti">◉</span>Ringkasan</button>
+  <button data-view="log"><span class="ti">☰</span>Log</button>
+  <button data-view="add" class="add"><span class="ti">＋</span>Tambah</button>
+  <button data-view="check"><span class="ti">✓</span>Checklist</button>
+  <button data-view="banner"><span class="ti">▭</span>Banner</button>
+</nav>
+
+<div id="toast" role="status" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>

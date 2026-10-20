@@ -1,0 +1,16 @@
+{
+  "name": "KLIKI Bajet Q4",
+  "short_name": "Bajet Q4",
+  "description": "Penjejak bajet marketing Q4 2026 KLIKI, terus dari Google Sheet.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#046ad8",
+  "lang": "ms",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
