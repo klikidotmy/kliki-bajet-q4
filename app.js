@@ -246,7 +246,7 @@ function renderBanner() {
   const rows = d.banner.slice(1, -1);
   const fields = [
     ['bil', 'Bil banner kedai', 4], ['hargaBanner', 'Harga banner seunit', 5], ['upahBanner', 'Upah pasang banner', 6], ['permitBanner', 'Permit banner seunit', 7],
-    ['hargaBunting', 'Harga bunting seunit', 8], ['upahBunting', 'Upah pasang bunting', 9], ['permitBunting', 'Permit bunting seunit', 10]
+    ['hargaBunting', 'Harga bunting seunit', 8], ['upahBunting', 'Upah pasang bunting (pakej)', 9], ['permitBunting', 'Permit bunting seunit', 10]
   ];
   let html = '<h2>Kira banner & bunting</h2><p class="sub">Isi harga dari sebut harga seller. App kira berapa bunting muat dalam bajet fizikal (cetak, pasang, permit). Baki ialah untuk perjalanan dan shoot.</p>';
   rows.forEach((r, i) => {
