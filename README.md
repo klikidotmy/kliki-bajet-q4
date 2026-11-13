@@ -24,6 +24,17 @@ PWA untuk jejak bajet marketing Q4 2026 KLIKI. App baca dan tulis terus ke Googl
 
 Bila ubah `Code.gs` kemudian: **Deploy** > **Manage deployments** > edit > Version: **New version**. URL kekal sama.
 
+## Sync belanja automatik
+
+`apps-script/Sync.gs` (fail kedua dalam projek Apps Script yang sama) isi tab Log Belanja setiap pagi pukul 10:
+
+- **Meta CTWA:** dari fail harian `kliki-meta-YYYY-MM-DD.json` dalam folder Drive *KLIKI Meta Report Data*. Satu baris setiap outlet setiap hari (beza jumlah bulan dengan fail sebelumnya), termasuk perbualan WhatsApp. Kod outlet ikut nama ad set: KLL, SP, AS, PDG.
+- **Google Ads (Raxbit):** dari tab Prestasi dalam *KLIKI – Tracker Google Ads (Raxbit)*. Satu baris setiap outlet setiap bulan: kos iklan, campur yuran monitor (tab Ringkasan B3) dibahagi sama rata antara outlet yang beriklan, campur SST (B4).
+- Baris sync ada kunci `auto:...` dalam kolum Nota dan dikemas kini, bukan ditambah semula. Kalau dipadam dalam app, ia masuk balik pada sync seterusnya.
+- TikTok Ads dan On-ground diisi sendiri melalui Tambah.
+
+Pasang atau tukar: tampal `Sync.gs`, run `installSyncTrigger` sekali dari editor (ia buang trigger lama, pasang yang baru dan terus sync). Projek guna runtime lama (Rhino), jadi guna `var`, bukan `const` atau `let`.
+
 ## Keselamatan
 
 - Tiada token. URL Apps Script ada dalam `app.js`, dan repo ni public, jadi sesiapa yang jumpa URL tu boleh baca bajet dan tambah, ubah atau padam rekod dalam sheet.
@@ -37,4 +48,5 @@ index.html, style.css, app.js   UI (vanilla JS, tiada build)
 sw.js, manifest.webmanifest     PWA (cache app shell; data sentiasa terus dari sheet)
 icons/                          ikon app dan logo
 apps-script/Code.gs             API untuk sheet (doGet = baca, doPost = tulis)
+apps-script/Sync.gs             sync belanja Meta dan Google Ads ke Log Belanja
 ```
