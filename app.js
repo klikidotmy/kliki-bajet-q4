@@ -18,7 +18,7 @@ const state = {
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = (s) => { if (s == null || s === '') return 0; const n = parseFloat(String(s).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? 0 : n; };
-const rm = (n) => 'RM' + Number(n).toLocaleString('en-MY', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const rm = (n) => { const f = Math.round(Number(n) * 100) % 100 ? 2 : 0; return 'RM' + Number(n).toLocaleString('en-MY', { minimumFractionDigits: f, maximumFractionDigits: f }); };
 const pct = (n) => (n * 100).toFixed(0) + '%';
 const todayISO = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };
 const parseDMY = (s) => { const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s || ''); return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null; };
@@ -29,11 +29,16 @@ function toast(msg, ms = 2600) {
 }
 
 /* ---------- API ---------- */
+async function readJson(res) {
+  try { return await res.json(); }
+  catch (e) { throw new Error('Sheet tak pulangkan data. Semak URL dan token dalam Tetapan.'); }
+}
+
 async function apiGet() {
   if (!state.cfg.url || !state.cfg.token) throw new Error('Set URL dan token dulu dalam Tetapan.');
   const u = state.cfg.url + (state.cfg.url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(state.cfg.token) + '&t=' + Date.now();
   const res = await fetch(u, { method: 'GET', redirect: 'follow' });
-  const j = await res.json();
+  const j = await readJson(res);
   if (!j.ok) throw new Error(j.error || 'Gagal baca sheet.');
   return j.data;
 }
@@ -45,7 +50,7 @@ async function apiPost(payload) {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(Object.assign({ token: state.cfg.token }, payload))
   });
-  const j = await res.json();
+  const j = await readJson(res);
   if (!j.ok) throw new Error(j.error || 'Gagal simpan.');
   return j;
 }
@@ -67,7 +72,7 @@ async function mutate(payload, okMsg) {
   try {
     const j = await apiPost(payload);
     if (j.data) setData(j.data);
-    render(); toast(okMsg); return true;
+    render(); if (okMsg) toast(okMsg); return true;
   } catch (e) { toast(navigator.onLine ? e.message : 'Offline. Tak dapat simpan.'); return false; }
 }
 
@@ -92,7 +97,7 @@ function statusPill(s) {
 function bar(frac, marker) {
   const w = Math.max(0, Math.min(1, frac)) * 100;
   const mk = marker == null ? '' : '<b style="left:' + (Math.max(0, Math.min(1, marker)) * 100) + '%"></b>';
-  return '<div class="bar"><i style="width:' + w + '%"></i>' + mk + '</div>';
+  return '<div class="bar"><i style="transform:scaleX(' + (w / 100) + ')"></i>' + mk + '</div>';
 }
 
 /* ---------- views ---------- */
@@ -115,25 +120,25 @@ function renderHome() {
 
   let html = '<h2>Ringkasan ' + mLab + '</h2>';
   html += '<div class="grid2">';
-  html += '<div class="kpi brand"><span class="lab">Belanja Q4</span><span class="val">' + rm(belanjaQ4) + '</span><span class="foot">daripada ' + rm(bajetQ4) + ' · baki ' + rm(bajetQ4 - belanjaQ4) + '</span>' + bar(bajetQ4 ? belanjaQ4 / bajetQ4 : 0) + '</div>';
+  html += '<div class="kpi brand"><span class="lab">Belanja Q4</span><span class="val">' + rm(belanjaQ4) + '</span><span class="foot">daripada ' + rm(bajetQ4) + '<br>baki ' + rm(bajetQ4 - belanjaQ4) + '</span>' + bar(bajetQ4 ? belanjaQ4 / bajetQ4 : 0) + '</div>';
   html += '<div class="kpi"><span class="lab">Belanja ' + mLab + '</span><span class="val">' + rm(num(tot[4])) + '</span><span class="foot">bajet ' + rm(num(tot[3])) + '</span>' + bar(num(tot[3]) ? num(tot[4]) / num(tot[3]) : 0) + '</div>';
-  html += '<div class="kpi"><span class="lab">Leads ' + mLab + '</span><span class="val">' + leads.toLocaleString('en-MY') + '</span><span class="foot">target ' + tLeads.toLocaleString('en-MY') + ' · ' + (tLeads ? pct(leads / tLeads) : '-') + '</span>' + bar(tLeads ? leads / tLeads : 0, pace) + '</div>';
-  html += '<div class="kpi"><span class="lab">Walk-in ' + mLab + '</span><span class="val">' + walk.toLocaleString('en-MY') + '</span><span class="foot">target ' + tWalk.toLocaleString('en-MY') + ' · ' + (tWalk ? pct(walk / tWalk) : '-') + '</span>' + bar(tWalk ? walk / tWalk : 0, pace) + '</div>';
+  html += '<div class="kpi"><span class="lab">Leads ' + mLab + '</span><span class="val">' + leads.toLocaleString('en-MY') + '</span><span class="foot">target ' + tLeads.toLocaleString('en-MY') + ' (' + (tLeads ? pct(leads / tLeads) : '-') + ')</span>' + bar(tLeads ? leads / tLeads : 0, pace) + '</div>';
+  html += '<div class="kpi"><span class="lab">Walk-in ' + mLab + '</span><span class="val">' + walk.toLocaleString('en-MY') + '</span><span class="foot">target ' + tWalk.toLocaleString('en-MY') + ' (' + (tWalk ? pct(walk / tWalk) : '-') + ')</span>' + bar(tWalk ? walk / tWalk : 0, pace) + '</div>';
   html += '</div>';
-  html += '<p class="sub">Garis hitam pada bar = sepatutnya ' + pct(pace) + ' ikut tarikh hari ini.</p>';
+  html += '<p class="sub">Garis tegak pada bar = sepatutnya ' + pct(pace) + ' ikut tarikh hari ini.</p>';
 
   if (wk) {
     html += '<div class="card"><div class="row"><h3>Minggu ' + esc(wk[0].slice(0, 5)) + ' – ' + esc(wk[1].slice(0, 5)) + '</h3></div><div class="list">' +
       item('Belanja', 'RM' + esc(wk[2])) +
-      item('Perbualan WhatsApp (iklan)', esc(wk[3]) + (wk[4] ? ' · RM' + esc(wk[4]) + ' seorang' : '')) +
+      item('Perbualan WhatsApp (iklan)', esc(wk[3]) + (wk[4] ? ' (RM' + esc(wk[4]) + ' seorang)' : '')) +
       item('Leads', esc(wk[5]) + ' / ' + esc(wk[6]) + ' (' + esc(wk[7] || '-') + ')') +
       item('Walk-in', esc(wk[8]) + ' / ' + esc(wk[9]) + ' (' + esc(wk[10] || '-') + ')') +
       '</div></div>';
   }
 
-  html += '<div class="card"><h3>Outlet ' + mLab + '</h3><div class="tblwrap"><table><tr><th>Outlet</th><th>Belanja</th><th>Leads</th><th>Walk-in</th><th>Kos/lead+</th><th>Status</th></tr>';
+  html += '<div class="card"><h3>Outlet ' + mLab + '</h3><div class="tblwrap"><table><tr><th>Outlet</th><th>Belanja</th><th>Leads</th><th>Walk-in</th><th>Kos/lead+</th></tr>';
   outlets.forEach((r) => {
-    html += '<tr><td>' + esc(r[2]) + '</td><td>' + rm(num(r[4])) + '<br><span class="sub">/' + rm(num(r[3])) + '</span></td><td>' + esc(r[7]) + '<br><span class="sub">' + esc(r[9]) + '</span></td><td>' + esc(r[10]) + '<br><span class="sub">' + esc(r[12]) + '</span></td><td>' + (r[15] ? 'RM' + esc(r[15]) : '-') + '</td><td>' + statusPill(r[16]) + '</td></tr>';
+    html += '<tr><td>' + esc(r[2]) + '<br>' + statusPill(r[16]) + '</td><td>' + rm(num(r[4])) + '<br><span class="sub">/' + rm(num(r[3])) + '</span></td><td>' + esc(r[7]) + '<br><span class="sub">' + esc(r[9]) + '</span></td><td>' + esc(r[10]) + '<br><span class="sub">' + esc(r[12]) + '</span></td><td>' + (r[15] ? 'RM' + esc(r[15]) : '-') + '</td></tr>';
   });
   html += '</table></div><p class="sub">Kos/lead+ = belanja ÷ leads tambahan berbanding prestasi biasa Sep. Had: RM' + esc((d.peraturan[0] || [])[1] || '15') + '.</p></div>';
 
@@ -142,13 +147,13 @@ function renderHome() {
   html += '<div class="card"><h3>Channel ' + mLab + '</h3><div class="list">';
   ch.forEach((r) => {
     const p = num(r[colPlan]), s = num(r[colPlan + 1]);
-    html += '<div class="item" style="flex-direction:column;gap:6px"><div class="row"><span class="t">' + esc(r[0]) + '</span><span class="num">' + rm(s) + ' / ' + rm(p) + '</span></div>' + bar(p ? s / p : 0) + '</div>';
+    html += '<div class="item stack"><div class="row"><span class="t">' + esc(r[0]) + '</span><span class="num">' + rm(s) + ' / ' + rm(p) + '</span></div>' + bar(p ? s / p : 0) + '</div>';
   });
   html += '</div></div>';
 
   const late = (d.checklist || []).filter((t) => !t.siap && t.tarikh && t.tarikh < todayISO());
   const next = (d.checklist || []).filter((t) => !t.siap && t.tarikh && t.tarikh >= todayISO()).slice(0, 3);
-  html += '<div class="card"><div class="row"><h3>Tugas</h3><button class="btn ghost" style="padding:6px 10px;font-size:13px" data-go="check">Semua</button></div>';
+  html += '<div class="card"><div class="row"><h3>Tugas</h3><button class="btn ghost sm" data-go="check">Semua</button></div>';
   if (late.length) html += '<div class="warn">' + late.length + ' tugas lewat. Paling awal: ' + esc(late[0].tugas) + '</div>';
   html += '<div class="list">' + (next.length ? next.map((t) => item(t.tugas, esc(t.tarikhLabel))).join('') : '<div class="empty">Tiada tugas akan datang.</div>') + '</div></div>';
 
@@ -187,7 +192,7 @@ function renderAdd() {
     if (!entry.channel) return toast('Pilih channel.');
     if (!(num(entry.amaun) > 0)) return toast('Masukkan amaun lebih dari 0.');
     const btn = $('#fSubmit'); btn.disabled = true; btn.textContent = 'Menyimpan...';
-    const ok = await mutate({ action: 'addLog', entry }, 'Disimpan: ' + rm(num(entry.amaun)) + ' · ' + entry.outlet);
+    const ok = await mutate({ action: 'addLog', entry }, null);
     if (ok) { store.set('kbq4.lastAdd', { outlet: entry.outlet, channel: entry.channel }); show('log'); }
     else { btn.disabled = false; btn.textContent = 'Simpan ke sheet'; }
   });
@@ -201,14 +206,15 @@ function renderLog() {
   const total = rows.reduce((a, r) => a + num(r.amaun), 0);
   let html = '<h2>Log belanja</h2><div class="seg">' + opts.map((o) => '<button class="' + (o === state.logFilter ? 'on' : '') + '" data-f="' + esc(o) + '">' + esc(o) + '</button>').join('') + '</div>';
   html += '<div class="card"><div class="row"><span class="sub">' + rows.length + ' rekod</span><span class="num">' + rm(total) + '</span></div><div class="list">';
-  html += rows.length ? rows.map((r) => '<div class="item"><div class="l"><div class="t">' + esc(r.perkara || r.channel) + '</div><div class="s">' + esc(r.tarikh) + ' · ' + esc(r.outlet) + ' · ' + esc(r.channel) + (r.perbualan ? ' · ' + esc(r.perbualan) + ' perbualan' : '') + (r.nota ? ' · ' + esc(r.nota) : '') + '</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px"><span class="num">RM' + esc(r.amaun) + '</span><button class="btn danger" data-del="' + r.row + '" data-outlet="' + esc(r.outlet) + '" data-amaun="' + esc(r.amaun) + '">Padam</button></div></div>').join('') : '<div class="empty">Belum ada belanja. Tekan Tambah untuk rekod yang pertama.</div>';
+  html += rows.length ? rows.map((r) => '<div class="item"><div class="l"><div class="t">' + esc(r.perkara || r.channel) + '</div><div class="s">' + esc(r.tarikh) + ', ' + esc(r.outlet) + ', ' + esc(r.channel) + (r.perbualan ? ', ' + esc(r.perbualan) + ' perbualan' : '') + '</div>' + (r.nota ? '<div class="s">' + esc(r.nota) + '</div>' : '') + '</div><div class="end"><span class="num">' + rm(num(r.amaun)) + '</span><button class="btn danger" data-del="' + r.row + '" data-outlet="' + esc(r.outlet) + '" data-amaun="' + esc(r.amaun) + '">Padam</button></div></div>').join('') : '<div class="empty">Belum ada belanja. Tekan Tambah untuk rekod yang pertama.</div>';
   html += '</div></div>';
   el.innerHTML = html;
   el.querySelectorAll('[data-f]').forEach((b) => (b.onclick = () => { state.logFilter = b.dataset.f; renderLog(); }));
   el.querySelectorAll('[data-del]').forEach((b) => (b.onclick = async () => {
     if (b.dataset.armed !== '1') { b.dataset.armed = '1'; b.textContent = 'Sahkan padam'; setTimeout(() => { if (b.isConnected) { b.dataset.armed = ''; b.textContent = 'Padam'; } }, 3000); return; }
     b.disabled = true;
-    await mutate({ action: 'deleteLog', row: +b.dataset.del, check: { outlet: b.dataset.outlet, amaun: b.dataset.amaun } }, 'Rekod dipadam');
+    const ok = await mutate({ action: 'deleteLog', row: +b.dataset.del, check: { outlet: b.dataset.outlet, amaun: b.dataset.amaun } }, null);
+    if (!ok) { b.disabled = false; b.dataset.armed = ''; b.textContent = 'Padam'; }
   }));
 }
 
@@ -226,16 +232,16 @@ function renderCheck() {
   html += '<div class="card">';
   if (!list.length) html += '<div class="empty">Tiada tugas dalam senarai ini.</div>';
   list.forEach((t) => {
-    if (t.fasa !== lastFasa) { html += '<h3 style="margin-top:6px">Fasa ' + esc(t.fasa) + '</h3>'; lastFasa = t.fasa; }
+    if (t.fasa !== lastFasa) { html += '<h3 class="fasa">Fasa ' + esc(t.fasa) + '</h3>'; lastFasa = t.fasa; }
     const late = !t.siap && t.tarikh && t.tarikh < t0;
-    html += '<div class="task' + (t.siap ? ' done' : '') + (late ? ' late' : '') + '"><input type="checkbox" id="ck' + t.row + '" data-row="' + t.row + '"' + (t.siap ? ' checked' : '') + ' aria-label="Tandakan siap: ' + esc(t.tugas) + '"><div class="l"><div class="due">' + esc(t.tarikhLabel) + (late ? ' · lewat' : '') + ' · ' + esc(t.siapa) + '</div><label for="ck' + t.row + '" class="t" style="color:inherit;font-size:15px">' + esc(t.tugas) + '</label>' + (t.cara ? '<details><summary>Cara</summary><p>' + esc(t.cara) + '</p></details>' : '') + '</div></div>';
+    html += '<div class="task' + (t.siap ? ' done' : '') + (late ? ' late' : '') + '"><input type="checkbox" id="ck' + t.row + '" data-row="' + t.row + '"' + (t.siap ? ' checked' : '') + ' aria-label="Tandakan siap: ' + esc(t.tugas) + '"><div class="l"><div class="due">' + (late ? 'Lewat, ' : '') + esc(t.tarikhLabel) + ', ' + esc(t.siapa) + '</div><label for="ck' + t.row + '" class="t">' + esc(t.tugas) + '</label>' + (t.cara ? '<details><summary>Cara</summary><p>' + esc(t.cara) + '</p></details>' : '') + '</div></div>';
   });
   html += '</div>';
   el.innerHTML = html;
   el.querySelectorAll('[data-cf]').forEach((b) => (b.onclick = () => { state.checkFilter = b.dataset.cf; renderCheck(); }));
   el.querySelectorAll('input[data-row]').forEach((c) => (c.onchange = async () => {
     c.disabled = true;
-    const ok = await mutate({ action: 'toggleTask', row: +c.dataset.row, done: c.checked }, c.checked ? 'Tugas siap' : 'Tanda dibuang');
+    const ok = await mutate({ action: 'toggleTask', row: +c.dataset.row, done: c.checked }, null);
     if (!ok) { c.checked = !c.checked; c.disabled = false; }
   }));
 }
@@ -253,10 +259,10 @@ function renderBanner() {
     const maxB = r[13];
     const baki = num(r[12]);
     html += '<form class="card" data-outlet="' + esc(r[0]) + '"><div class="row"><h3>' + esc(r[0]) + '</h3><span class="pill ' + (maxB === '' ? 'idle' : 'good') + '">' + (maxB === '' ? 'Isi harga' : 'Max ' + esc(maxB) + ' bunting') + '</span></div>' +
-      '<div class="grid2"><div class="kpi"><span class="lab">Bajet fizikal</span><span class="val" style="font-size:18px">RM' + esc(r[3]) + '</span></div><div class="kpi"><span class="lab">Perjalanan & shoot</span><span class="val" style="font-size:18px">RM' + esc(r[15]) + '</span></div></div>' +
+      '<div class="grid2"><div class="stat"><span class="lab">Bajet fizikal</span><span class="val">' + rm(num(r[3])) + '</span></div><div class="stat"><span class="lab">Perjalanan & shoot</span><span class="val">' + rm(num(r[15])) + '</span></div></div>' +
       (baki < 0 ? '<div class="warn">Banner kedai dah lebih bajet fizikal. Kecilkan saiz atau kurangkan bilangan.</div>' : '') +
       '<div class="grid2">' + fields.map((f) => '<label for="b' + i + f[0] + '">' + f[1] + '<input id="b' + i + f[0] + '" name="' + f[0] + '" type="number" inputmode="decimal" step="0.01" min="0" value="' + esc(String(r[f[2]]).replace(/,/g, '')) + '"></label>').join('') + '</div>' +
-      '<div class="row"><span class="sub">Kos fizikal: RM' + esc(r[14]) + '</span><button class="btn" type="submit" style="padding:10px 16px;font-size:14px">Kira & simpan</button></div></form>';
+      '<div class="row"><span class="sub">Kos fizikal: ' + rm(num(r[14])) + '</span><button class="btn sm" type="submit">Kira & simpan</button></div></form>';
   });
   el.innerHTML = html;
   el.querySelectorAll('form[data-outlet]').forEach((f) => f.addEventListener('submit', async (e) => {
