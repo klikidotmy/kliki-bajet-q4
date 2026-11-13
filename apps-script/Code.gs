@@ -2,7 +2,7 @@
  * KLIKI Bajet Q4 - API untuk PWA.
  * Projek Apps Script berasingan (script.google.com) yang buka sheet "Penjejak Bajet Marketing Q4 2026" ikut ID.
  * Deploy > New deployment > Web app (Execute as: Me, Who has access: Anyone).
- * Set TOKEN dalam Project Settings > Script properties.
+ * Tiada token: sesiapa yang ada URL /exec boleh baca dan tulis sheet ni.
  */
 
 const SHEET_ID = '1kIbaD_2i99siDW-TbNvftlAD6d_giHlC61rGr5XM4O0';
@@ -24,12 +24,6 @@ function json_(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function checkToken_(token) {
-  const expected = PropertiesService.getScriptProperties().getProperty('TOKEN');
-  if (!expected) throw new Error('TOKEN belum diset dalam Script properties.');
-  if (token !== expected) throw new Error('Token salah.');
-}
-
 function sheet_(name) {
   const sh = SpreadsheetApp.openById(SHEET_ID).getSheetByName(name);
   if (!sh) throw new Error('Tab tidak dijumpai: ' + name);
@@ -42,7 +36,6 @@ function display_(name, a1) {
 
 function doGet(e) {
   try {
-    checkToken_(e.parameter.token);
     return json_({ ok: true, data: snapshot_() });
   } catch (err) {
     return json_({ ok: false, error: String(err.message || err) });
@@ -53,7 +46,6 @@ function doPost(e) {
   const lock = LockService.getScriptLock();
   try {
     const body = JSON.parse(e.postData.contents);
-    checkToken_(body.token);
     lock.waitLock(10000);
     let result;
     switch (body.action) {

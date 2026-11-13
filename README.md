@@ -14,21 +14,21 @@ PWA untuk jejak bajet marketing Q4 2026 KLIKI. App baca dan tulis terus ke Googl
 
 1. Buka script.google.com > **New project** (projek berasingan; ia buka sheet ikut `SHEET_ID` dalam kod).
 2. Padam kod contoh, tampal semua isi `apps-script/Code.gs`, tekan Save.
-3. **Project Settings** (ikon gear) > **Script properties** > Add: `TOKEN` = kata laluan panjang pilihan sendiri (contoh 20 aksara rawak).
-4. **Deploy** > **New deployment** > jenis **Web app**.
+3. **Deploy** > **New deployment** > jenis **Web app**.
    - Execute as: **Me**
    - Who has access: **Anyone**
    - Tekan Deploy, benarkan akses bila diminta, salin **Web app URL** (berakhir dengan `/exec`).
-5. Buka app di telefon, tekan ikon gear, tampal URL dan TOKEN, tekan Simpan.
+4. Tampal URL tu dalam `API_URL` di atas `app.js`, commit dan push.
+5. Buka app di telefon. Tiada login: app terus baca sheet.
 6. Pasang ke skrin utama: Safari > Share > Add to Home Screen, atau Chrome > menu > Install app.
 
 Bila ubah `Code.gs` kemudian: **Deploy** > **Manage deployments** > edit > Version: **New version**. URL kekal sama.
 
 ## Keselamatan
 
-- URL dan TOKEN disimpan dalam telefon sahaja (localStorage), tidak dalam repo.
-- Tanpa TOKEN yang betul, Apps Script tolak semua permintaan.
-- Jangan kongsi URL bersama TOKEN. Kalau terbocor, tukar TOKEN dalam Script properties.
+- Tiada token. URL Apps Script ada dalam `app.js`, dan repo ni public, jadi sesiapa yang jumpa URL tu boleh baca bajet dan tambah, ubah atau padam rekod dalam sheet.
+- Kalau perlu tutup akses: **Deploy** > **Manage deployments** > **Archive**, kemudian buat deployment baru dan tukar `API_URL`.
+- Simpan salinan sheet (File > Version history) supaya data boleh dipulihkan kalau ada orang ubah.
 
 ## Struktur
 

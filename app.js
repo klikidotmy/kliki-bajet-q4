@@ -6,8 +6,10 @@ const store = {
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 };
 
+/* URL Web app Apps Script (berakhir dengan /exec). Tiada token: sesiapa yang ada URL ni boleh baca dan tulis sheet. */
+const API_URL = 'https://script.google.com/macros/s/AKfycbz73ZyFEVezFnSEW6EIPh362tzWxIJ2TDZn_tfLpj5oFrkE8K8qbhXZ6XJQ2V1MtHAwgA/exec';
+
 const state = {
-  cfg: store.get('kbq4.cfg', { url: '', token: '' }),
   data: store.get('kbq4.data', null),
   view: 'home',
   checkFilter: 'aktif',
@@ -31,12 +33,11 @@ function toast(msg, ms = 2600) {
 /* ---------- API ---------- */
 async function readJson(res) {
   try { return await res.json(); }
-  catch (e) { throw new Error('Sheet tak pulangkan data. Semak URL dan token dalam Tetapan.'); }
+  catch (e) { throw new Error('Sheet tak pulangkan data. Semak deployment Apps Script.'); }
 }
 
 async function apiGet() {
-  if (!state.cfg.url || !state.cfg.token) throw new Error('Set URL dan token dulu dalam Tetapan.');
-  const u = state.cfg.url + (state.cfg.url.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(state.cfg.token) + '&t=' + Date.now();
+  const u = API_URL + (API_URL.includes('?') ? '&' : '?') + 't=' + Date.now();
   const res = await fetch(u, { method: 'GET', redirect: 'follow' });
   const j = await readJson(res);
   if (!j.ok) throw new Error(j.error || 'Gagal baca sheet.');
@@ -44,11 +45,10 @@ async function apiGet() {
 }
 
 async function apiPost(payload) {
-  if (!state.cfg.url || !state.cfg.token) throw new Error('Set URL dan token dulu dalam Tetapan.');
-  const res = await fetch(state.cfg.url, {
+  const res = await fetch(API_URL, {
     method: 'POST', redirect: 'follow',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(Object.assign({ token: state.cfg.token }, payload))
+    body: JSON.stringify(payload)
   });
   const j = await readJson(res);
   if (!j.ok) throw new Error(j.error || 'Gagal simpan.');
@@ -102,8 +102,8 @@ function bar(frac, marker) {
 
 /* ---------- views ---------- */
 function needSetup(el) {
-  el.innerHTML = '<div class="card"><h2>Sambung ke sheet</h2><p class="sub">App ni baca dan tulis terus ke sheet Penjejak Bajet Marketing Q4 2026. Masukkan URL Apps Script dan token sekali sahaja.</p><button class="btn" id="goSet">Buka Tetapan</button></div>';
-  $('#goSet').onclick = () => show('settings');
+  el.innerHTML = '<div class="card"><h2>Belum ada data</h2><p class="sub">App tak dapat baca sheet Penjejak Bajet Marketing Q4 2026. Semak internet, kemudian cuba lagi.</p><button class="btn" id="goRetry">Cuba lagi</button></div>';
+  $('#goRetry').onclick = () => refresh(false);
 }
 
 function renderHome() {
@@ -274,24 +274,8 @@ function renderBanner() {
   }));
 }
 
-function renderSettings() {
-  const el = $('#view-settings');
-  el.innerHTML = '<h2>Tetapan</h2><form id="setForm" class="card">' +
-    '<label for="sUrl">URL Apps Script (Web app)<input id="sUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec" value="' + esc(state.cfg.url) + '"></label>' +
-    '<label for="sTok">Token<input id="sTok" type="password" autocomplete="off" value="' + esc(state.cfg.token) + '"></label>' +
-    '<button class="btn" type="submit">Simpan & sambung</button></form>' +
-    '<p class="sub">URL dan token disimpan dalam telefon ini sahaja, bukan dalam repo.</p>';
-  $('#setForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    state.cfg = { url: $('#sUrl').value.trim(), token: $('#sTok').value.trim() };
-    store.set('kbq4.cfg', state.cfg);
-    await refresh(true);
-    if (state.data) { toast('Bersambung ke sheet'); show('home'); }
-  });
-}
-
 /* ---------- router ---------- */
-const renderers = { home: renderHome, add: renderAdd, log: renderLog, check: renderCheck, banner: renderBanner, settings: renderSettings };
+const renderers = { home: renderHome, add: renderAdd, log: renderLog, check: renderCheck, banner: renderBanner };
 function render() { renderers[state.view](); }
 function show(v) {
   state.view = v;
@@ -301,12 +285,11 @@ function show(v) {
 }
 
 document.querySelectorAll('.tabs button').forEach((b) => (b.onclick = () => show(b.dataset.view)));
-$('#btnSettings').onclick = () => show('settings');
 $('#btnRefresh').onclick = () => refresh(false);
 
 if (state.data) setData(state.data);
-show(state.cfg.url ? 'home' : 'settings');
-if (state.cfg.url) refresh(true);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && state.cfg.url) refresh(true); });
+show('home');
+refresh(true);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) refresh(true); });
 
 if ('serviceWorker' in navigator) { window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {})); }
